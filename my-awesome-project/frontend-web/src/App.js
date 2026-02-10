@@ -158,13 +158,13 @@ function App() {
 
         {/* ROW 2: GRAPHS */}
         <div className="row row-2-analysis-grid">
-          <div className="chart-box glass-panel"><span className="label-mini">ASSET MIX</span>
+          <div className="chart-box glass-panel"><span className="label-mini">ASSET DISTRIBUTION</span>
             <div className="chart-wrapper-small">{currentData && <Doughnut data={{ labels: Object.keys(currentData.type_distribution), datasets: [{ data: Object.values(currentData.type_distribution), backgroundColor: Object.keys(currentData.type_distribution).map(t => EQUIPMENT_COLORS[t] || EQUIPMENT_COLORS.Default), borderWidth: 0 }] }} options={{ maintainAspectRatio: false }} />}</div>
           </div>
-          <div className="chart-box glass-panel"><span className="label-mini">CORRELATION</span>
+          <div className="chart-box glass-panel"><span className="label-mini">P VS F CORRELATION</span>
             <div className="chart-wrapper-small"><Scatter data={{ datasets: [{ label: 'Units', data: currentData?.data?.map(i => ({ x: i.Flowrate, y: i.Pressure })), backgroundColor: '#22C1EE' }] }} options={{ maintainAspectRatio: false }} /></div>
           </div>
-          <div className="chart-box glass-panel"><span className="label-mini">THERMAL</span>
+          <div className="chart-box glass-panel"><span className="label-mini">THERMAL DISTRIBUTION</span>
             <div className="chart-wrapper-small"><Bar data={{ labels: thermalAggregate.labels, datasets: [{ label: 'Temp', data: thermalAggregate.averages, backgroundColor: '#9D50BB' }] }} options={{ maintainAspectRatio: false }} /></div>
           </div>
         </div>
