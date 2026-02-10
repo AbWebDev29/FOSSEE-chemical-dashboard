@@ -21,12 +21,25 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCritical, setFilterCritical] = useState(false);
   const [stats, setStats] = useState({ avgFlow: 0, avgPres: 0, healthScore: 100, yield: 0 });
-  
-  // MODAL STATES
   const [showModal, setShowModal] = useState(false);
   const [activeSummary, setActiveSummary] = useState(null);
 
   useEffect(() => { fetchHistory(); }, []);
+
+  // --- PREDICTIVE FAILURE LOGIC ---
+  const calculateFailurePrediction = (pressure) => {
+    const p = parseFloat(pressure);
+    if (p <= 8.0) return null; 
+    const hours = Math.max(1, Math.floor(48 * Math.exp(-0.8 * (p - 8))));
+    return hours;
+  };
+
+  // Helper to calculate health based on pressure anomalies
+  const getHealthFromData = (rows) => {
+    if (!rows || rows.length === 0) return 100;
+    const highPressureUnits = rows.filter(r => parseFloat(r.Pressure) > 8.0).length;
+    return Math.max(0, 100 - (highPressureUnits * 15));
+  };
 
   const calculateStats = (rows) => {
     if (!rows || rows.length === 0) return { avgFlow: 0, avgPres: 0, healthScore: 100, yield: 0 };
@@ -34,12 +47,12 @@ function App() {
     const pValues = rows.map(r => parseFloat(r.Pressure || 0));
     const meanF = fValues.reduce((a, b) => a + b, 0) / fValues.length;
     const meanP = pValues.reduce((a, b) => a + b, 0) / pValues.length;
-    const highPressureUnits = rows.filter(r => parseFloat(r.Pressure) > 8.0).length;
+    
     return {
       avgFlow: meanF.toFixed(2),
       avgPres: meanP.toFixed(2),
       yield: Math.min(((meanF / 120) * 100).toFixed(1), 100),
-      healthScore: Math.max(0, 100 - (highPressureUnits * 15))
+      healthScore: getHealthFromData(rows)
     };
   };
 
@@ -62,7 +75,6 @@ function App() {
     } catch (err) { alert("Upload failed."); }
   };
 
-  // GRAPH DATA LOGIC
   const thermalAggregate = useMemo(() => {
     if (!currentData?.data) return { labels: [], averages: [] };
     const totals = {}, counts = {};
@@ -72,8 +84,7 @@ function App() {
       counts[type] = (counts[type] || 0) + 1;
     });
     const labels = Object.keys(totals);
-    const averages = labels.map(l => (totals[l] / counts[l]).toFixed(1));
-    return { labels, averages };
+    return { labels, averages: labels.map(l => (totals[l] / counts[l]).toFixed(1)) };
   }, [currentData]);
 
   const filteredEquipment = useMemo(() => {
@@ -91,22 +102,39 @@ function App() {
         <div className="orb orb-1"></div><div className="orb orb-2"></div><div className="orb orb-3"></div>
       </div>
 
-      {/* --- REPAIRED SUMMARY MODAL --- */}
+      {/* --- UPDATED SUMMARY DIALOG BOX --- */}
       {showModal && activeSummary && (
-        <div className="modal-overlay" style={{display: 'flex'}} onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content glass-panel" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{margin:0}}>Batch Intelligence</h3>
+              <h3>Batch Intelligence Summary</h3>
               <button className="close-btn" onClick={() => setShowModal(false)}>&times;</button>
             </div>
-            <hr style={{opacity: 0.1, margin: '15px 0'}} />
+            
             <div className="modal-stats-grid">
-              <div className="m-stat"><span>Yield</span><strong>{((activeSummary.avg_flowrate / 120) * 100).toFixed(1)}%</strong></div>
-              <div className="m-stat"><span>Avg Flow</span><strong>{parseFloat(activeSummary.avg_flowrate).toFixed(2)}</strong></div>
-              <div className="m-stat"><span>Avg Pres</span><strong>{parseFloat(activeSummary.avg_pressure).toFixed(2)}</strong></div>
-              <div className="m-stat"><span>Asset Count</span><strong>{activeSummary.data_json?.length || 0}</strong></div>
+              <div className="m-stat">
+                <span>Yield</span>
+                <strong>{((activeSummary.avg_flowrate / 120) * 100).toFixed(1)}%</strong>
+              </div>
+              <div className="m-stat">
+                <span>Avg Flow</span>
+                <strong>{parseFloat(activeSummary.avg_flowrate).toFixed(2)}</strong>
+              </div>
+              <div className="m-stat">
+                <span>Avg Pres</span>
+                <strong>{parseFloat(activeSummary.avg_pressure).toFixed(2)}</strong>
+              </div>
+              <div className="m-stat">
+                <span>Sys Health</span>
+                <strong style={{color: getHealthFromData(activeSummary.data_json) < 70 ? '#FF4D8D' : '#00FFB2'}}>
+                  {getHealthFromData(activeSummary.data_json)}%
+                </strong>
+              </div>
             </div>
-            <button className="btn-process" style={{marginTop: '20px', width: '100%'}} onClick={() => setShowModal(false)}>Acknowledge</button>
+
+            <button className="btn-process" style={{marginTop:'20px', width:'100%'}} onClick={() => setShowModal(false)}>
+              Close Summary
+            </button>
           </div>
         </div>
       )}
@@ -130,36 +158,36 @@ function App() {
 
         {/* ROW 2: GRAPHS */}
         <div className="row row-2-analysis-grid">
-          <div className="chart-box glass-panel"><span className="label-mini">ASSET DISTRIBUTION</span>
-            <div className="chart-wrapper-small">{currentData && <Doughnut data={{ labels: Object.keys(currentData.type_distribution), datasets: [{ data: Object.values(currentData.type_distribution), backgroundColor: Object.keys(currentData.type_distribution).map(t => EQUIPMENT_COLORS[t] || EQUIPMENT_COLORS.Default), borderWidth: 0 }] }} options={{ maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { color: '#fff', font: { size: 10 } } } } }} />}</div>
+          <div className="chart-box glass-panel"><span className="label-mini">ASSET MIX</span>
+            <div className="chart-wrapper-small">{currentData && <Doughnut data={{ labels: Object.keys(currentData.type_distribution), datasets: [{ data: Object.values(currentData.type_distribution), backgroundColor: Object.keys(currentData.type_distribution).map(t => EQUIPMENT_COLORS[t] || EQUIPMENT_COLORS.Default), borderWidth: 0 }] }} options={{ maintainAspectRatio: false }} />}</div>
           </div>
-          <div className="chart-box glass-panel"><span className="label-mini">PRESSURE CORRELATION</span>
+          <div className="chart-box glass-panel"><span className="label-mini">CORRELATION</span>
             <div className="chart-wrapper-small"><Scatter data={{ datasets: [{ label: 'Units', data: currentData?.data?.map(i => ({ x: i.Flowrate, y: i.Pressure })), backgroundColor: '#22C1EE' }] }} options={{ maintainAspectRatio: false }} /></div>
           </div>
-          <div className="chart-box glass-panel"><span className="label-mini">THERMAL AVERAGES</span>
+          <div className="chart-box glass-panel"><span className="label-mini">THERMAL</span>
             <div className="chart-wrapper-small"><Bar data={{ labels: thermalAggregate.labels, datasets: [{ label: 'Temp', data: thermalAggregate.averages, backgroundColor: '#9D50BB' }] }} options={{ maintainAspectRatio: false }} /></div>
           </div>
         </div>
 
-        {/* ROW 3: TABLE & LOGS */}
+        {/* ROW 3: TABLE */}
         <div className="row row-4-5-split">
           <div className="col-data">
             <div className="col-header">
-              <span className="section-label">ASSET REGISTRY</span>
+              <span className="section-label">PROACTIVE ASSET REGISTRY</span>
               <div className="header-actions">
                 <div className={`glass-toggle ${filterCritical ? 'active' : ''}`} onClick={() => setFilterCritical(!filterCritical)}>
-                  <div className="toggle-dot"></div>
-                  <span>{filterCritical ? "UNSTABLE ONLY" : "ALL ASSETS"}</span>
+                  <div className="toggle-dot"></div><span>{filterCritical ? "FAILURES ONLY" : "ALL ASSETS"}</span>
                 </div>
                 <input type="text" className="minimal-search" placeholder="Search..." onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             </div>
             <div className="glass-panel scrollable">
               <table className="receh-table">
-                <thead><tr><th>NAME</th><th>TYPE</th><th>FLOW</th><th>TEMP</th><th>PRESSURE</th><th>CONDITION</th></tr></thead>
+                <thead><tr><th>NAME</th><th>TYPE</th><th>FLOW</th><th>TEMP</th><th>PRESSURE</th><th>PREDICTED FAILURE</th><th>CONDITION</th></tr></thead>
                 <tbody>
                   {filteredEquipment.map((item, i) => {
                     const pVal = parseFloat(item.Pressure || 0);
+                    const hoursToFail = calculateFailurePrediction(pVal);
                     const isUnstable = pVal > 8.0;
                     return (
                       <tr key={i} className={isUnstable ? 'anomaly-row' : ''}>
@@ -172,10 +200,18 @@ function App() {
                              <div className="pres-bar-bg">
                                <div className={`pres-bar-fill ${isUnstable ? 'pulse-bar' : ''}`} style={{ width: `${Math.min(100, (pVal / 10) * 100)}%`, background: isUnstable ? '#FF4D8D' : '#00FFB2' }}></div>
                              </div>
-                             <span className="pres-value" style={{color: isUnstable ? '#FF4D8D' : '#fff'}}>{pVal}</span>
+                             <span className="pres-value">{pVal}</span>
                           </div>
                         </td>
-                        <td><span className="status-pill" style={{background: isUnstable ? '#FF4D8D' : '#00FFB2'}}>{isUnstable ? 'UNSTABLE' : 'STABLE'}</span></td>
+                        <td>
+                          {isUnstable ? (
+                            <div className="failure-countdown">
+                              <span className="countdown-clock">⏳ {hoursToFail} hrs</span>
+                              <div className="risk-level" style={{width: `${100 - (hoursToFail * 2)}%`}}></div>
+                            </div>
+                          ) : <span style={{opacity: 0.3}}>Optimal</span>}
+                        </td>
+                        <td><span className="status-pill" style={{background: isUnstable ? '#FF4D8D' : '#00FFB2'}}>{isUnstable ? 'CRITICAL' : 'STABLE'}</span></td>
                       </tr>
                     );
                   })}
@@ -185,13 +221,12 @@ function App() {
           </div>
 
           <div className="col-history">
-            <span className="section-label">BATCH HISTORY</span>
+            <span className="section-label">LOGS</span>
             <div className="glass-panel scrollable">
               {history.map((h, i) => (
                 <div key={i} className="history-item-card">
                   <div className="h-content-wrapper"><strong>{h.file_name}</strong><div className="h-stats">Yld: {((h.avg_flowrate / 120) * 100).toFixed(1)}%</div></div>
                   <div className="history-hover-actions">
-                    {/* MODAL TRIGGER */}
                     <button className="btn-h-small" onClick={() => { setActiveSummary(h); setShowModal(true); }}>Summary</button>
                     <button className="btn-h-small secondary" onClick={() => { setCurrentData({ data: h.data_json, type_distribution: h.type_distribution }); setStats(calculateStats(h.data_json)); }}>Restore</button>
                   </div>
