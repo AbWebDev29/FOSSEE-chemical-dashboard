@@ -18,7 +18,6 @@ class Reporter:
 
         total_headlines = 0
         report = []
-
         # Sort files by date (based on filename)
         for file_path in sorted(all_files):
             with open(file_path, "r") as f:

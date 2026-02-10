@@ -23,6 +23,7 @@ function App() {
   const [stats, setStats] = useState({ avgFlow: 0, avgPres: 0, healthScore: 100, yield: 0 });
   const [showModal, setShowModal] = useState(false);
   const [activeSummary, setActiveSummary] = useState(null);
+  
 
   useEffect(() => { fetchHistory(); }, []);
 
@@ -64,16 +65,23 @@ function App() {
   };
 
   const handleUpload = async () => {
-    if (!file) return alert("Select file first");
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const res = await axios.post('http://127.0.0.1:8000/api/upload/', formData);
-      setStats(calculateStats(res.data.data));
-      setCurrentData(res.data);
-      fetchHistory(); 
-    } catch (err) { alert("Upload failed."); }
-  };
+  if (!file) return alert("Select file first");
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await axios.post('http://127.0.0.1:8000/api/upload/', formData);
+    
+    // Ensure you are setting the stats using the array at res.data.data
+    setStats(calculateStats(res.data.data));
+    
+    // Set the full response so Doughnut and Stock Analysis can see it
+    setCurrentData(res.data);
+    
+    fetchHistory(); 
+  } catch (err) { 
+    console.error("Upload failed", err); 
+  }
+};
 
   const thermalAggregate = useMemo(() => {
     if (!currentData?.data) return { labels: [], averages: [] };
@@ -95,6 +103,32 @@ function App() {
       return filterCritical ? (matchesSearch && isUnstable) : matchesSearch;
     });
   }, [currentData, searchTerm, filterCritical]);
+
+  const stockAnalysis = useMemo(() => {
+  // 1. Unified data source: Use the array from history or the active upload
+  const rawData = activeSummary?.data_json || currentData?.data;
+  
+  if (!rawData || !Array.isArray(rawData)) {
+    return [];
+  }
+
+  // 2. Aggregate counts by Type
+  const counts = {};
+  rawData.forEach(item => {
+    // Check for 'Type' or 'type' or 'Equipment Type'
+    const category = item.Type || item.type || item['Equipment Type'] || "Unknown";
+    counts[category] = (counts[category] || 0) + 1;
+  });
+
+  // 3. Transform into table format with thresholds
+  return Object.keys(counts).map(cat => ({
+    name: cat.toUpperCase(),
+    qty: counts[cat],
+    // Logic: 1 unit is understock, more than 5 is overflow
+    status: counts[cat] <= 2 ? 'UNDERSTOCK' : (counts[cat] > 3 ? 'OVERFLOW' : 'OPTIMAL')
+  }));
+}, [currentData, activeSummary]);
+
 
   return (
     <>
@@ -233,6 +267,43 @@ function App() {
                 </div>
               ))}
             </div>
+            <span className="section-label">STOCK ANALYSIS (BY TYPE)</span>
+  <div className="glass-panel">
+  <table className="receh-table mini-table">
+    <thead>
+      <tr>
+        <th style={{ textAlign: 'left', paddingLeft: '10px' }}>CATEGORY</th>
+        <th style={{ textAlign: 'center' }}>QTY</th>
+        <th style={{ textAlign: 'right', paddingRight: '10px' }}>STATUS</th>
+      </tr>
+    </thead>
+    <tbody>
+      {stockAnalysis.length > 0 ? (
+        stockAnalysis.map((item, i) => (
+          <tr key={i}>
+            <td style={{ textAlign: 'left', paddingLeft: '10px', color: '#22C1EE', fontWeight: 'bold' }}>
+              {item.name}
+            </td>
+            <td style={{ textAlign: 'center' }}>
+              {item.qty}
+            </td>
+            <td style={{ textAlign: 'right', paddingRight: '10px' }}>
+              <span className={`status-pill ${item.status}`}>
+                {item.status}
+              </span>
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: 'rgba(255,255,255,0.3)' }}>
+            Awaiting analysis...
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
           </div>
         </div>
       </div>

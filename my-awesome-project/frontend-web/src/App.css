@@ -1042,3 +1042,166 @@ button:hover,
     width: 100%;
   }
 }
+/* --- STOCK ALERT PILLS --- */
+.status-pill.UNDERSTOCK {
+  background: rgba(34, 193, 238, 0.1);
+  color: #22C1EE;
+  border: 1px solid #22C1EE;
+  box-shadow: 0 0 10px rgba(34, 193, 238, 0.3);
+  animation: slowBlink 2s infinite;
+}
+
+.status-pill.OVERFLOW {
+  background: rgba(255, 77, 141, 0.1);
+  color: #FF4D8D;
+  border: 1px solid #FF4D8D;
+  box-shadow: 0 0 10px rgba(255, 77, 141, 0.3);
+  animation: rapidPulse 0.8s infinite;
+}
+
+.status-pill.OPTIMAL {
+  background: rgba(0, 255, 178, 0.1);
+  color: #00FFB2;
+  border: 1px solid rgba(0, 255, 178, 0.3);
+}
+
+/* --- ALERT ANIMATIONS --- */
+@keyframes slowBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes rapidPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0px #FF4D8D; }
+  50% { transform: scale(1.05); box-shadow: 0 0 15px #FF4D8D; }
+  100% { transform: scale(1); box-shadow: 0 0 0px #FF4D8D; }
+}
+.mini-table {
+  font-size: 0.75rem !important;
+}
+
+.mini-table td {
+  padding: 8px !important;
+  background: none !important; /* Keep it clean for the side panel */
+}
+
+.mini-table th {
+  padding: 8px !important;
+  font-size: 0.65rem !important;
+}
+
+/* Ensure the side column stacks elements nicely */
+.col-history {
+  display: flex;
+  flex-direction: column;
+}
+/* --- MODAL FIXES --- */
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centers the header and close button */
+  text-align: center;
+}
+
+.modal-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 20px;
+  width: 100%; /* Ensures grid takes full width of modal */
+  margin: 20px 0;
+}
+
+.btn-close-modal {
+  width: 100%;
+  margin-top: 10px;
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* --- SIDEBAR STOCK TABLE --- */
+.mini-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mini-table th {
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  color: #6a6a8e;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mini-table td {
+  padding: 12px 0;
+  font-size: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+/* Ensure Status Pill is small enough for the sidebar */
+.mini-table .status-pill {
+  padding: 2px 8px;
+  font-size: 0.55rem;
+  display: inline-block;
+  min-width: 70px;
+  text-align: center;
+}
+
+.mini-table {
+  width: 100%;
+  border-spacing: 0;
+  margin-top: 5px;
+}
+
+.mini-table th {
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.4);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 10px;
+}
+
+.mini-table td {
+  padding: 12px 0;
+  font-size: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+
+/* Fix for the Status Pill size in the sidebar */
+.mini-table .status-pill {
+  font-size: 0.55rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+/* --- Stock Table Refinement --- */
+.mini-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mini-table td {
+  padding: 10px 0;
+  font-size: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mini-table .status-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: bold;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Status Colors */
+.status-pill.UNDERSTOCK { background: rgba(255, 206, 86, 0.2); color: #FFCE56; border: 1px solid #FFCE56; }
+.status-pill.OVERFLOW { background: rgba(255, 77, 141, 0.2); color: #FF4D8D; border: 1px solid #FF4D8D; }
+.status-pill.OPTIMAL { background: rgba(0, 255, 178, 0.2); color: #00FFB2; border: 1px solid #00FFB2; }
