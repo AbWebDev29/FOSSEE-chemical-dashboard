@@ -1657,3 +1657,95 @@ body {
   text-transform: uppercase;
   font-size: 0.7rem;
 }
+
+.row-2-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.chart-box {
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+}
+
+.chart-wrapper-small {
+  flex-grow: 1;
+  position: relative;
+}
+
+.label-mini {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.bg-animations {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: -1;
+  background: #0b0c15;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.2;
+  animation: orbit 20s linear infinite;
+}
+
+.orb-1 { width: 400px; height: 400px; background: #22C1EE; top: 10%; left: 10%; transform-origin: 150% 150%; }
+.orb-2 { width: 350px; height: 350px; background: #9D50BB; bottom: 10%; right: 10%; transform-origin: -100% -100%; animation-duration: 30s; }
+.orb-3 { width: 200px; height: 200px; background: #00FFB2; top: 50%; left: 40%; animation-duration: 15s; }
+
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  width: 400px;
+  padding: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: modalScale 0.3s ease-out;
+}
+
+.modal-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.m-stat {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.m-stat span { font-size: 0.7rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; }
+.m-stat strong { font-size: 1.2rem; margin-top: 5px; color: #22C1EE; }
+
+@keyframes modalScale {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
